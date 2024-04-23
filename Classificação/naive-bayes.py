@@ -7,14 +7,14 @@ configs = {
     'col_classe': 'Class',
     'nome_arquivo': caminhoArquivo+arquivo,
     'remover_colunas': ['Flight'],
-    'concatenacao': None,#{
-    #    'col1': 'AirportTo',
-    #    'col2': 'AirportFrom',
-    #    'concat': '-',
-    #    'col_nova': 'Airports',
-    #    'drop_cols': True
-    #},
-    'cols_categoria_nominal': ['AirportTo', 'AirportFrom'],
+    'concatenacao': {
+        'col1': 'AirportTo',
+        'col2': 'AirportFrom',
+        'concat': '-',
+        'col_nova': 'Airports',
+        'drop_cols': True
+    },
+    'cols_categoria_nominal': ['Airports'],
     'cols_dummy': ['Airline'],
     'padronizacao': False
 }
