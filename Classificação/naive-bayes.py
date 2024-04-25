@@ -1,43 +1,59 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Sun Apr 14 13:08:55 2024
 
-caminhoArquivo = './Trabalhos/Trabalho 1/Classificação/'
-arquivo = 'airlines_delay.csv'
+@author: saulo
+"""
+
+import sys
+sys.path.append('D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação')
+
+from pre_processador import PreProcessador
+from classificador import Classificador
+from validacao_cruzada import ValidacaoCruzada
+from metrificador import Metrificador
+
+### PROCESSADOR ###
+caminhoArquivo = 'D:/dev/projetos/machineLearning/classificacao-delay-airlines'
 
 configs = {
     'col_classe': 'Class',
-    'nome_arquivo': caminhoArquivo+arquivo,
+    'nome_arquivo': caminhoArquivo+'/Classificação/airlines_delay.csv',
     'remover_colunas': ['Flight'],
-    'concatenacao': {
-        'col1': 'AirportTo',
-        'col2': 'AirportFrom',
-        'concat': '-',
-        'col_nova': 'Airports',
-        'drop_cols': True
-    },
-    'cols_categoria_nominal': ['Airports'],
+    'concatenacao': None,#{
+    #    'col1': 'AirportTo',
+    #    'col2': 'AirportFrom',
+    #    'concat': '-',
+    #    'col_nova': 'Airports',
+    #    'drop_cols': True
+    #},
+    'cols_categoria_nominal': ['AirportTo', 'AirportFrom'],
     'cols_dummy': ['Airline'],
-    'padronizacao': False
+    'padronizacao': True
 }
 
 processador = PreProcessador(configs)
 
+### CLASSIFICAÇÃO ###
+classificador = Classificador(processador)
 
-# Configuração do Naive Bayes
-import matplotlib.pyplot as plt
-from sklearn.naive_bayes import GaussianNB
-
-
-classificador = GaussianNB()
-
-# Treinamento
-classificador.fit(processador.previsores_treinamento, processador.classe_treinamento.iloc[:, 0])
+classificador.NaiveBayes()
 
 
-# teste
-previsoes = classificador.predict(processador.previsores_teste)
-
-# análise de resultados
+### ANÁLISE DE RESULTADOS ###
 metrificador = Metrificador()
+acuracia = metrificador.acuracia(processador.classe_teste, classificador.previsoes)
+matriz = metrificador.matrizConfusao(processador.classe_teste, classificador.previsoes)
 
-acuracia = metrificador.acuracia(previsoes, processador.classe_teste)
-matriz = metrificador.matrizConfusao(previsoes, processador.classe_teste)
+
+### VALIDAÇÃO CRUZADA ###
+validacaoCruzada = ValidacaoCruzada(classificador, processador)
+
+validacaoCruzadaNaiveBayes = {
+    'matriz_media': validacaoCruzada.matriz_media,
+    'matriz_desvio_padrao': validacaoCruzada.matriz_desvio_padrao,
+    'acuracia_final_media': validacaoCruzada.acuracia_final_media,
+    'acuracia_final_desvio_padrao': validacaoCruzada.acuracia_final_desvio_padrao,
+    'metricas_medias': validacaoCruzada.metricas_medias,
+    'metricas_desvio_padrao': validacaoCruzada.metricas_desvio_padrao
+    }

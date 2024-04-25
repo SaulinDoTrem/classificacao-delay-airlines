@@ -5,12 +5,21 @@ Created on Sun Apr 14 13:08:55 2024
 @author: saulo
 """
 
+import sys
+sys.path.append('D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação')
+
 from pre_processador import PreProcessador
+from classificador import Classificador
+from validacao_cruzada import ValidacaoCruzada
 from metrificador import Metrificador
+
+
+### PROCESSADOR ###
+caminhoArquivo = 'D:/dev/projetos/machineLearning/classificacao-delay-airlines'
 
 configs = {
     'col_classe': 'Class',
-    'nome_arquivo': './Trabalhos/Trabalho 1/Classificação/airlines_delay.csv',
+    'nome_arquivo': caminhoArquivo+'/Classificação/airlines_delay.csv',
     'remover_colunas': ['Flight'],
     'concatenacao': None,#{
     #    'col1': 'AirportTo',
@@ -26,46 +35,26 @@ configs = {
 
 processador = PreProcessador(configs)
 
-# Configuração do KNN
-import matplotlib.pyplot as plt
-from sklearn.neighbors import KNeighborsClassifier
 
-acuracias_treinamento = []
-acuracias_teste = []
+### CLASSIFICAÇÃO ###
+classificador = Classificador(processador)
+classificador.KNN(n=8)
 
-# testar vários valores de K
-numero_vizinhos = range(1,51)
 
-for k in numero_vizinhos:
-    # construir modelo
-    classificador = KNeighborsClassifier(n_neighbors=k, metric='minkowski', p=2)
-    #treinar modelo
-    classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-    acuracias_treinamento.append(classificador.score(processador.previsores_treinamento, processador.classe_treinamento))
-    acuracias_teste.append(classificador.score(processador.previsores_teste, processador.classe_teste))
-
-plt.plot(numero_vizinhos, acuracias_treinamento, label='acuracia de treinamento')
-plt.plot(numero_vizinhos, acuracias_teste, label='acuracia de teste')
-plt.ylabel('Acuracia')
-plt.xlabel('Valor de K')
-plt.legend()
-
-# Classificação com KNN 
-
-n = 8
-
-# minkowski com p=2 é a distância euclidiana
-classificador = KNeighborsClassifier(n_neighbors=n, metric='minkowski', p=2)
-
-# Treinamento
-
-classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-
-# teste
-previsoes = classificador.predict(processador.previsores_teste)
-
-# análise de resultados
+### ANÁLISE DE RESULTADOS ###
 metrificador = Metrificador()
+acuracia = metrificador.acuracia(processador.classe_teste, classificador.previsoes)
+matriz = metrificador.matrizConfusao(processador.classe_teste, classificador.previsoes)
 
-acuracia = metrificador.acuracia(previsoes, processador.classe_teste)
-matriz = metrificador.matrizConfusao(previsoes, processador.classe_teste)
+
+### VALIDAÇÃO CRUZADA ###
+validacaoCruzada = ValidacaoCruzada(classificador, processador)
+
+validacaoCruzadaKNN = {
+    'matriz_media': validacaoCruzada.matriz_media,
+    'matriz_desvio_padrao': validacaoCruzada.matriz_desvio_padrao,
+    'acuracia_final_media': validacaoCruzada.acuracia_final_media,
+    'acuracia_final_desvio_padrao': validacaoCruzada.acuracia_final_desvio_padrao,
+    'metricas_medias': validacaoCruzada.metricas_medias,
+    'metricas_desvio_padrao': validacaoCruzada.metricas_desvio_padrao
+    }

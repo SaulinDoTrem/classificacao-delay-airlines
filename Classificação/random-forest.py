@@ -5,9 +5,20 @@ Created on Sun Apr 21 17:19:45 2024
 @author: thais
 """
 
+import sys
+sys.path.append('D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação')
+
+from pre_processador import PreProcessador
+from classificador import Classificador
+from validacao_cruzada import ValidacaoCruzada
+from metrificador import Metrificador
+
+### PROCESSADOR ###
+caminhoArquivo = 'D:/dev/projetos/machineLearning/classificacao-delay-airlines'
+
 configs = {
     'col_classe': 'Class',
-    'nome_arquivo': 'D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação/airlines_delay.csv',
+    'nome_arquivo': caminhoArquivo+'/Classificação/airlines_delay.csv',
     'remover_colunas': [],
     'concatenacao': None,#{
     #    'col1': 'AirportTo',
@@ -16,52 +27,33 @@ configs = {
     #    'col_nova': 'Airports',
     #    'drop_cols': True
     #},
-    'cols_categoria_nominal': ['AirportTo', 'AirportFrom'],
-    'cols_dummy': ['Airline'],
+    'cols_categoria_nominal': ['AirportTo', 'AirportFrom', 'Airline'],
+    'cols_dummy': [],
     'padronizacao': True
 }
 
 processador = PreProcessador(configs)
 
-# Configuração da Árvore de Decisão
-import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
+
+### CLASSIFICAÇÃO ###
+classificador = Classificador(processador)
+classificador.RandomForest(criterion='entropy', max_depth=8, n_estimators=5, max_features=4, random_state=0)
 
 
-# testar vários valores de profundidade (depth)
-
-acuracias_treinamento = []
-acuracias_teste = []
-
-valor_profundidade = range(1,16)
-
-for i in valor_profundidade:
-    # construir modelo
-    classificador = RandomForestClassifier(criterion='gini', max_depth=7, n_estimators=i, max_features=20, random_state=0)
-    #treinar modelo
-    classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-    acuracias_treinamento.append(classificador.score(processador.previsores_treinamento, processador.classe_treinamento))
-    acuracias_teste.append(classificador.score(processador.previsores_teste, processador.classe_teste))
-
-plt.plot(valor_profundidade, acuracias_treinamento, label='acuracia de treinamento')
-plt.plot(valor_profundidade, acuracias_teste, label='acuracia de teste')
-plt.ylabel('Acuracia')
-plt.xlabel('Estimadores')
-plt.legend()
-
-
-# Geração da Random Forest
-classificador = RandomForestClassifier(criterion='entropy', max_depth=7, n_estimators=6, max_features=20, random_state=0)
-
-# Treinamento
-
-classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-
-# Teste
-previsoes = classificador.predict(processador.previsores_teste)
-
-# Análise de resultados
+### ANÁLISE DE RESULTADOS ###
 metrificador = Metrificador()
+acuracia = metrificador.acuracia(processador.classe_teste, classificador.previsoes)
+matriz = metrificador.matrizConfusao(processador.classe_teste, classificador.previsoes)
 
-acuracia = metrificador.acuracia(previsoes, processador.classe_teste)
-matriz = metrificador.matrizConfusao(previsoes, processador.classe_teste)
+
+### VALIDAÇÃO CRUZADA ###
+validacaoCruzada = ValidacaoCruzada(classificador, processador)
+
+validacaoCruzadaRandomForest = {
+    'matriz_media': validacaoCruzada.matriz_media,
+    'matriz_desvio_padrao': validacaoCruzada.matriz_desvio_padrao,
+    'acuracia_final_media': validacaoCruzada.acuracia_final_media,
+    'acuracia_final_desvio_padrao': validacaoCruzada.acuracia_final_desvio_padrao,
+    'metricas_medias': validacaoCruzada.metricas_medias,
+    'metricas_desvio_padrao': validacaoCruzada.metricas_desvio_padrao
+    }

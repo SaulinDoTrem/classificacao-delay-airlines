@@ -5,9 +5,21 @@ Created on Sat Apr 20 21:49:13 2024
 @author: thais
 """
 
+import sys
+sys.path.append('D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação')
+
+from pre_processador import PreProcessador
+from classificador import Classificador
+from validacao_cruzada import ValidacaoCruzada
+from metrificador import Metrificador
+
+
+### PROCESSADOR ###
+caminhoArquivo = 'D:/dev/projetos/machineLearning/classificacao-delay-airlines'
+
 configs = {
     'col_classe': 'Class',
-    'nome_arquivo': 'D:/dev/projetos/machineLearning/classificacao-delay-airlines/Classificação/airlines_delay.csv',
+    'nome_arquivo': caminhoArquivo+'/Classificação/airlines_delay.csv',
     'remover_colunas': [],
     'concatenacao': None,#{
     #    'col1': 'AirportTo',
@@ -23,48 +35,26 @@ configs = {
 
 processador = PreProcessador(configs)
 
-# Configuração da Árvore de Decisão
-import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier
+
+### CLASSIFICAÇÃO ###
+classificador = Classificador(processador)
+classificador.ArvoreDecisao(criterion='entropy', max_depth=6, random_state=0)
 
 
-# testar vários valores de profundidade (depth)
-
-acuracias_treinamento = []
-acuracias_teste = []
-
-valor_profundidade = range(1,5)
-
-for i in valor_profundidade:
-    # construir modelo
-    classificador = DecisionTreeClassifier(criterion='entropy', max_depth=6, random_state=0, max_features=i)
-    #treinar modelo
-    classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-    acuracias_treinamento.append(classificador.score(processador.previsores_treinamento, processador.classe_treinamento))
-    acuracias_teste.append(classificador.score(processador.previsores_teste, processador.classe_teste))
-
-plt.plot(valor_profundidade, acuracias_treinamento, label='acuracia de treinamento')
-plt.plot(valor_profundidade, acuracias_teste, label='acuracia de teste')
-plt.ylabel('Acuracia')
-plt.xlabel('Valor de Profundidade')
-plt.legend()
-
-
-# Classificação com Árvore de Decisão 
-d = 5
-
-# Geração da Árvore
-classificador = DecisionTreeClassifier(criterion='entropy', max_depth=6, random_state=0)
-
-# Treinamento
-
-classificador.fit(processador.previsores_treinamento, processador.classe_treinamento)
-
-# Teste
-previsoes = classificador.predict(processador.previsores_teste)
-
-# Análise de resultados
+### ANÁLISE DE RESULTADOS ###
 metrificador = Metrificador()
+acuracia = metrificador.acuracia(processador.classe_teste, classificador.previsoes)
+matriz = metrificador.matrizConfusao(processador.classe_teste, classificador.previsoes)
 
-acuracia = metrificador.acuracia(previsoes, processador.classe_teste)
-matriz = metrificador.matrizConfusao(previsoes, processador.classe_teste)
+
+### VALIDAÇÃO CRUZADA ###
+validacaoCruzada = ValidacaoCruzada(classificador, processador)
+
+validacaoCruzadaArvoreDecisao = {
+    'matriz_media': validacaoCruzada.matriz_media,
+    'matriz_desvio_padrao': validacaoCruzada.matriz_desvio_padrao,
+    'acuracia_final_media': validacaoCruzada.acuracia_final_media,
+    'acuracia_final_desvio_padrao': validacaoCruzada.acuracia_final_desvio_padrao,
+    'metricas_medias': validacaoCruzada.metricas_medias,
+    'metricas_desvio_padrao': validacaoCruzada.metricas_desvio_padrao
+    }
